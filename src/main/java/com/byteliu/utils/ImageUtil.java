@@ -17,11 +17,21 @@ import java.io.*;
 import java.util.ArrayList;
 
 /**
- * 类描述: 图片添加文字水印
+ * 类描述: 图片相关工具类
+ *
+ * - 获取图片格式类型
+ * - 图片添加水印
  *
  * @author yugu.lx 2018/12/8 8:19 PM
  */
 public class ImageUtil {
+    public static final String TYPE_GIF = "gif";
+    public static final String TYPE_PNG = "png";
+    public static final String TYPE_BMP = "bmp";
+    public static final String TYPE_JPG = "jpg";
+    public static final String TYPE_TIFF = "tiff";
+
+    public static final String TYPE_UNKNOWN = "unknown";
 
     public static void main(String args[]) {
         WaterMarkConfig config = new WaterMarkConfig("吴小雨", "/Users/liuxiao/Desktop");
@@ -38,7 +48,101 @@ public class ImageUtil {
 
         ImageUtil.textWaterMark(imagePaths, config.setRotatedMultiWaterMark(true).setWaterMarkText("Byte_Liu").setFontSize(20).setAlpha(0.5f).setFontColor(Color.LIGHT_GRAY));
 
+
+        String imagePath = "/Users/liuxiao/Desktop/markdown-img-paste-2018120811504064_byteliu.png";
+        File image = new File(imagePath);
+        InputStream is = null;
+        try {
+            is = new FileInputStream(image);
+//            byte[] bt = new byte[4];
+//            is.read(bt);
+//            System.out.println(bytesToHexString(bt));
+            System.out.println(getPicType(is));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            if(is!=null){
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
     }
+
+    /**
+     * byte数组转换成16进制字符串
+     * @param src
+     * @return
+     */
+    public static String bytesToHexString(byte[] src){
+        StringBuilder stringBuilder = new StringBuilder();
+        if (src == null || src.length <= 0) {
+            return null;
+        }
+        for (int i = 0; i < src.length; i++) {
+            int v = src[i] & 0xFF;
+            String hv = Integer.toHexString(v);
+            if (hv.length() < 2) {
+                stringBuilder.append(0);
+            }
+            stringBuilder.append(hv);
+        }
+        return stringBuilder.toString();
+    }
+
+    public static String getPicType(byte[] src) {
+
+        String type = bytesToHexString(src).toUpperCase();
+        //读取文件的前几个字节来判断图片格式
+        return getTypeNameByMagicNumStr(type);
+    }
+
+    private static String getTypeNameByMagicNumStr(String type) {
+        if (type.contains("FFD8FF")) {
+            return TYPE_JPG;
+        } else if (type.contains("89504E47")) {
+            return TYPE_PNG;
+        } else if (type.contains("47494638")) {
+            return TYPE_GIF;
+        } else if (type.contains("424D")) {
+            return TYPE_BMP;
+        } else if (type.contains("4D4D")||type.contains("4949")) {
+            return TYPE_TIFF;
+        }else{
+            return TYPE_UNKNOWN;
+        }
+    }
+
+    /**
+     * 根据输入流判断图片类型
+     * @param is
+     * @return jpg/png/gif/bmp
+     */
+    public static String getPicType(InputStream is) {
+        //读取文件的前几个字节来判断图片格式
+        byte[] b = new byte[4];
+        try {
+            is.read(b, 0, b.length);
+            String type = bytesToHexString(b).toUpperCase();
+            return getTypeNameByMagicNumStr(type);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally{
+            if(is != null){
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
+    }
+
 
     /**
      * 计算水印文本长度
@@ -65,6 +169,12 @@ public class ImageUtil {
 //        imagePaths.forEach(imagePath ->textWaterMark(imagePath,config));
     }
 
+
+    /**
+     * 图片添加水印
+     * @param imagePath
+     * @param config
+     */
     public static void textWaterMark(String imagePath, WaterMarkConfig config) {
         String imageFileName = imagePath.substring(imagePath.lastIndexOf(File.separator) + 1, imagePath.lastIndexOf(".")) + "_byteliu" + imagePath.substring(imagePath.lastIndexOf("."));
         OutputStream os;
@@ -143,7 +253,9 @@ public class ImageUtil {
 
     }
 
-
+    /**
+     * 图片添加水印配置
+     */
     static class WaterMarkConfig {
         /**
          * 水印文本
